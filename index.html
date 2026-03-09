@@ -7,7 +7,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <title>Really Cool Weather App</title>
+
+    <!-- mobile manifest for adding to homescreen -->
     <link rel="manifest" href="manifest.json">
+    <!---------------------------------------------->
+
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
     <link rel="apple-touch-icon" href="images/apple-touch-icon-iphone-60x60-precomposed.png">
     <link rel="apple-touch-icon" sizes="60x60" href="images/apple-touch-icon-ipad-76x76-precomposed.png">
@@ -21,7 +25,6 @@
 
     <!-- TODO: Add an icon element here to represent current weather conditions -->
     <!-- Example: sun, cloud, rain icon using Bootstrap Icons -->
-    
 
     <!-- TODO: Create an element to display the current temperature -->
     <!-- Give this element an ID so JavaScript can update it dynamically -->
@@ -44,55 +47,55 @@
                 <h2 class="text-center mb-4" id="txtLocation">Cookeville, TN</h2>
 
                 <!-- MVP: conditions, temp, humidity -->
-                <form>
+                <div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
 
-                            <label class="form-label d-flex align-items-left" for="txtConditions">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label d-flex align-items-center">
                                 <i class="bi bi-cloud me-2"></i> Conditions:
                             </label>
 
-                            <!-- empty span to put information from our api call -->
-                            <span class="d-flex align-items-left" id="txtConditions"></span>
+                            <!-- empty span to insert conditions text retrieved from the API -->
+                            <span class="d-block" id="txtConditions"></span>
                         </div>
 
                         <div class="col-md-6 mb-3">
-
-                            <label class="form-label d-flex align-items-right" for="txtTemperature">
+                            <label class="form-label d-flex align-items-center">
                                 <i class="bi bi-thermometer-half me-2"></i> Temperature:
                             </label>
 
-                            <!-- empty span to put information from our api call -->
-                            <span class="d-flex align-items-left" id="txtTemperature"></span>
+                            <!-- empty span to insert temperature value retrieved from the API -->
+                            <span class="d-block" id="txtTemperature"></span>
                         </div>
 
                         <div class="col-md-6 mb-3">
-
-                            <label class="form-label d-flex align-items-right" for="txtHumidity">
+                            <label class="form-label d-flex align-items-center">
                                 <i class="bi bi-droplet-fill me-2"></i> Humidity:
                             </label>
 
-                            <!-- empty span to put information from our api call -->
-                            <span class="d-flex align-items-left" id="txtHumidity"></span>
+                            <!-- empty span to insert humidity value retrieved from the API -->
+                            <span class="d-block" id="txtHumidity"></span>
                         </div>
-                    </div> 
-                    
+
+                    </div>
+
                     <hr />
 
                     <!-- TODO: Add a footer somewhere on the page -->
                     <!-- It must credit Open-Meteo and link to their website per their license -->
                     <!-- Example location: bottom of the card or bottom of the page -->
-                                    
+
                     <!-- Credit open meteo according to their guide lines -->
                     <div class="d-flex justify-content-center mt-2">
                         <label class="form-label" style="font-size: medium;">
-                            Weather data provided by 
+                            Weather data provided by
                             <a href="https://open-meteo.com/" target="_blank">Open-Meteo.com</a>
                         </label>
                     </div>
-                </form>
 
-            </div> 
+                </div>
+
+            </div>
         </div>
     </div>
 
@@ -107,11 +110,13 @@
     <!-- 4. Update the HTML elements on the page -->
 
     <script>
-        const url = 'https://api.open-meteo.com/v1/';
-        let blnError = false;
 
-        //Weather codes meaning's taken from WMO table. Picked codes that seemed most useful for a simple weather app
-        //Helper function converts weather code number into text
+        // Base URL for Open-Meteo API requests
+        const url = 'https://api.open-meteo.com/v1/'
+
+        // Weather code meanings taken from the WMO weather interpretation table.
+        // This helper function converts the numeric weather code returned by the API
+        // into a human-readable weather condition description.
         function getWeather(code) {
             const weatherCodes = {
                 0: 'Clear sky',
@@ -134,7 +139,8 @@
             return weatherCodes[code] || 'Unknown Conditions'
         }
 
-        //Function to choose Bootstrap icon
+        // Function that selects an appropriate Bootstrap weather icon
+        // based on the weather code returned by the API
         function getWeatherIcon(code) {
             if (code === 0 || code === 1) return "bi-sun-fill"
             else if (code === 2 || code === 3) return "bi-cloud-sun-fill"
@@ -144,39 +150,37 @@
             else if (code === 45) return "bi-cloud-fog-fill"
             else return "bi-cloud"
         }
-        
-        if (blnError == false) {
-            //wrap async funtion so it runs on open
+
             (async () => {
                 try {
-                    //Get forcast from open meteo
+                    // Request current weather data from Open-Meteo
                     const objResponse = await fetch(`${url}forecast?latitude=36.1628&longitude=-85.5016&current=temperature_2m,relative_humidity_2m,is_day,wind_speed_10m,precipitation,rain,showers,cloud_cover,weather_code&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch`);
 
                     if (!objResponse.ok) {
                         throw new Error(`HTTP error! status: ${objResponse.status}`)
                     }
 
-                    //put response into data json object
+                    // Convert the API response into a usable JSON object
                     const objData = await objResponse.json()
 
-                    //break up data into the numbers and the units
-                    const strCurrent = objData.current
-                    const strUnits = objData.current_units
+                    // Split the current weather values and the unit labels from the response
+                    const objCurrent = objData.current
+                    const objUnits = objData.current_units
 
-                    //get the meaning the the weather code from our helper funciton
-                    const strConditions = getWeather(strCurrent.weather_code)
+                    // Determine the readable weather description using the helper function
+                    const strConditions = getWeather(objCurrent.weather_code)
 
-                    //set spans to the data from our api call
+                    // Update the spans on the page with the weather data retrieved from the API
                     document.querySelector('#txtConditions').innerHTML = strConditions
-                    document.querySelector('#txtTemperature').innerHTML = `${strCurrent.temperature_2m}${strUnits.temperature_2m}`
-                    document.querySelector('#txtHumidity').innerHTML = `${strCurrent.relative_humidity_2m}${strUnits.relative_humidity_2m}`
+                    document.querySelector('#txtTemperature').innerHTML = `${objCurrent.temperature_2m}${objUnits.temperature_2m}`
+                    document.querySelector('#txtHumidity').innerHTML = `${objCurrent.relative_humidity_2m}${objUnits.relative_humidity_2m}`
 
-                    //update icon
-                    const iconClass = getWeatherIcon(strCurrent.weather_code)
+                    // Update the weather icon dynamically based on the weather code
+                    const iconClass = getWeatherIcon(objCurrent.weather_code)
                     document.querySelector('#weatherIcon').className = `bi ${iconClass} display-1`
 
-                } 
-                catch (objError) {
+                } catch (objError) {
+                    // If the API call fails, display an error popup to the user
                     Swal.fire({
                         title: "Oh no, something went wrong!",
                         icon: "error",
@@ -184,12 +188,12 @@
                     });
                 }
             })()
-        }
     </script>
 </body>
 </html>
 
 <!-- AI USE
- - Gemini created logo
- - Chat GPT created todo comments
+ - Gemini was used to create my logo 
+ - ChatGPT was used to generate some TODO comments, help explain API concepts like fetch, get, and async,
+   and troubleshoot issues with the API request.
 -->
